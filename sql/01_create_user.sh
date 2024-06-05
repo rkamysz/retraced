@@ -1,0 +1,14 @@
+#!/bin/bash
+echo "Create user $ORACLE_DB_USER..."
+
+sqlplus / as sysdba <<EOF
+ALTER SESSION SET CONTAINER=$ORACLE_DB_CONTAINER;
+CREATE USER $ORACLE_DB_USER IDENTIFIED BY $ORACLE_DB_PASSWORD;
+GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO $ORACLE_DB_USER;
+EOF
+
+if [ $? -eq 0 ]; then
+    echo "Done $ORACLE_DB_USER."
+else
+    echo "Failed $ORACLE_DB_USER."
+fi

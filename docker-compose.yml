@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: my-rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: ${AMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${AMQ_PASSWORD}
+    ports:
+      - "5672:5672" # AMQP protocol
+      - "15672:15672" # management interface
+
+  oracle-db:
+    image: container-registry.oracle.com/database/free:latest
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    environment:
+      - ORACLE_PWD=${ORACLE_DB_PASSWORD}
+      - ORACLE_CHARACTERSET=AL32UTF8
+      - ORACLE_DB_PASSWORD=${ORACLE_DB_PASSWORD}
+      - ORACLE_DB_USER=${ORACLE_DB_USER}
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./sql:/opt/oracle/scripts/startup
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sqlplus",
+          "-silent",
+          "system/oracle@localhost/FREEPDB1",
+          "<<<",
+          "SELECT 1 FROM DUAL;",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  category-service:
+    build:
+      context: ./categories
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - oracle-db
+      - rabbitmq
+    environment:
+      CATEGORIES_PORT: ${CATEGORIES_PORT}
+      ORACLE_DB_USER: ${ORACLE_DB_USER}
+      ORACLE_DB_PASSWORD: ${ORACLE_DB_PASSWORD}
+      ORACLE_DB_CONN_STRING: ${ORACLE_DB_CONN_STRING}
+      AMQ_URL: ${AMQ_URL}
+      AMQ_USER: ${AMQ_USER}
+      AMQ_PASSWORD: ${AMQ_PASSWORD}
+
+  analytics-service:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - oracle-db
+      - rabbitmq
+    environment:
+      ORACLE_DB_USER: ${ORACLE_DB_USER}
+      ORACLE_DB_PASSWORD: ${ORACLE_DB_PASSWORD}
+      ORACLE_DB_CONN_STRING: ${ORACLE_DB_CONN_STRING}
+      AMQ_URL: ${AMQ_URL}
+      AMQ_USER: ${AMQ_USER}
+      AMQ_PASSWORD: ${AMQ_PASSWORD}
+
+volumes:
+  oracle-data:
