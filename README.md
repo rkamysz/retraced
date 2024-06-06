@@ -20,7 +20,7 @@ Both services communicate asynchronously via RabbitMQ, with `Categories Service`
 Create a `.env` file in the root directory of each service with the following environment variables:
 
 ```plaintext
-CATEGORIES_PORT=3000
+PORT=3000
 
 AMQ_USER=user
 AMQ_PASSWORD=password

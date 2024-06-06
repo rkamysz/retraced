@@ -48,7 +48,7 @@ services:
       - oracle-db
       - rabbitmq
     environment:
-      CATEGORIES_PORT: ${CATEGORIES_PORT}
+      PORT: ${PORT}
       ORACLE_DB_USER: ${ORACLE_DB_USER}
       ORACLE_DB_PASSWORD: ${ORACLE_DB_PASSWORD}
       ORACLE_DB_CONN_STRING: ${ORACLE_DB_CONN_STRING}
