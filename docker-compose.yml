@@ -38,12 +38,27 @@ services:
       timeout: 10s
       retries: 5
 
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - oracle-db
+      - rabbitmq
+    environment:
+      PORT: ${PORT}
+      AMQ_URL: ${AMQ_URL}
+      AMQ_USER: ${AMQ_USER}
+      AMQ_PASSWORD: ${AMQ_PASSWORD}
+
   category-service:
     build:
       context: ./categories
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       - oracle-db
       - rabbitmq
@@ -61,7 +76,7 @@ services:
       context: ./analytics
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "3002:3002"
     depends_on:
       - oracle-db
       - rabbitmq

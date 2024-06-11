@@ -1,23 +1,48 @@
-import express from "express";
-import { CategoriesRouterBuilder } from "./api/rest/categories.router";
 import { Dependencies } from "./dependencies";
 import { Config } from "./config";
-import { AnalyticsRouterBuilder } from "./api/rest/analytics.router";
+import { CategoryQueues } from "./api/messages";
+import { CategoriesController } from "./domain/categories.controller";
+import { CategoriesListeners } from "./categories.listeners";
 
+/**
+ * Bootstrap function to initialize the application.
+ * 
+ * This function performs the following steps:
+ * 1. Creates a configuration object from the `.env` file.
+ * 2. Initializes dependencies.
+ * 3. Configures the dependencies with the loaded configuration.
+ * 4. Creates a `CategoriesController` instance.
+ * 5. Retrieves the `messageService` from the dependency container.
+ * 6. Sets up message listeners for various category-related operations.
+ * 
+ * @returns {Promise<void>} - A promise that resolves when the bootstrap process is complete.
+ */
 export const bootstrap = async () => {
   const config = Config.create("./.env");
-  const app = express();
-  app.use(express.json());
   const dependencies = new Dependencies();
 
   await dependencies.configure(config);
 
-  app.use("/categories", CategoriesRouterBuilder.build(dependencies.container));
-  app.use("/analytics", AnalyticsRouterBuilder.build(dependencies.container));
+  const controller = new CategoriesController(dependencies.container);
+  const { messageService } = dependencies.container;
 
-  app.listen(config.port, () => {
-    console.log(`Server running on port ${config.port}`);
-  });
+  messageService.listen(
+    CategoryQueues.AddCategoryRequests,
+    CategoriesListeners.onAddCategory(controller, messageService),
+    { noAck: false }
+  );
+
+  messageService.listen(
+    CategoryQueues.GetCategoryTreeRequests,
+    CategoriesListeners.onGetCategoryTree(controller, messageService),
+    { noAck: false }
+  );
+
+  messageService.listen(
+    CategoryQueues.RemoveCategoryRequests,
+    CategoriesListeners.onRemoveCategory(controller, messageService),
+    { noAck: false }
+  );
 };
 
 bootstrap();

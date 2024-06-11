@@ -4,11 +4,13 @@ import { CategoriesOracle } from "./data/categories.oracle";
 import { CategoryRepositoryImpl } from "./data/category.repository-impl";
 import { CategoryRepository } from "./domain/category.repository";
 import { CountCategoriesUseCase } from "./domain/use-cases/count-categories.use-case";
-import { AmqMessages, Messages, Queues } from "./api/events/message-publisher";
 import { Config } from "./config";
+import { MessageService } from "./api/messages/message-service";
+import { AmqService } from "./api/messages/amq.service";
+import { AnalyticsQueues } from "./api/messages";
 
 export type Container = {
-  publisher: Messages;
+  messageService: MessageService;
   categories: {
     repository: CategoryRepository;
     useCases: {
@@ -18,7 +20,10 @@ export type Container = {
 };
 
 export class Dependencies implements Soap.Dependencies {
-  public readonly container: Container = { publisher: null, categories: null };
+  public readonly container: Container = {
+    messageService: null,
+    categories: null,
+  };
   async configure(config: Config): Promise<void> {
     console.log("Connecting to DB ...", config.dbConnString);
     /**
@@ -33,11 +38,11 @@ export class Dependencies implements Soap.Dependencies {
     /**
      * EVENTS
      */
-    this.container.publisher = new AmqMessages(config.amqUrl, [
-      Queues.AnalyticsRequests,
-      Queues.AnalyticsResponses,
+    this.container.messageService = new AmqService(config.amqUrl, [
+      AnalyticsQueues.AnalyticsRequests,
+      AnalyticsQueues.AnalyticsResponses,
     ]);
-    await this.container.publisher.init();
+    await this.container.messageService.init();
 
     /**
      * BL COMPONENTS
