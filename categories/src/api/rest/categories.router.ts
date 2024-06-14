@@ -56,17 +56,6 @@ export class CategoriesRouterBuilder {
       }
     });
 
-    router.get("/:id", async (req, res) => {
-      const { id } = req.params;
-      const result = await controller.list(+id);
-
-      if (result.isFailure) {
-        res.status(500).send(result.failure.error.message);
-      } else {
-        res.status(201).send(result.content);
-      }
-    });
-
     router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { recursive } = req.query;
